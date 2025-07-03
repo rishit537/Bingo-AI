@@ -1,59 +1,66 @@
+import os
+import warnings
+
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
+warnings.filterwarnings("ignore", category=UserWarning)
+
+import ast
+import pygame
 import speech_recognition as sr
 import webbrowser
 import pyttsx3
 import musicLibrary
 import requests
-from openai import OpenAI
+import aiProcessing as ap
+import edge_tts
+import asyncio
 
 recognizer = sr.Recognizer()
 engine = pyttsx3.init()
+# voices = engine.getProperty("voices")
 wake_word = "bingo"
 newsapi = "c1e8ed90a395416da7e4da978a95129f"
 
+# for voice in voices:
+#     if "male" in voice.name.lower():
+#         engine.setProperty("voice", voice.id)
+#         break
 
-def speak(text):
-    engine.say(text)
-    engine.runAndWait()
+engine.setProperty("rate", 150)
 
 
-def aiProcess(command):
-    client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key="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",
-    )
+async def speak(text):
+    # engine.say(text)
+    # engine.runAndWait()
+    tts = edge_tts.Communicate(text=text, voice="en-US-GuyNeural")
+    await tts.save("output.mp3")
+    pygame.init()
+    pygame.mixer.init()
+    pygame.mixer.music.load("output.mp3")
+    pygame.mixer.music.play()
 
-    response = client.chat.completions.create(
-        model="deepseek/deepseek-chat-v3-0324:free",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a virtual assistant named Bingo skilled in general tasks like Alexa and Google Cloud. Give short responses. Do not highlight parts of content with special characters. Example, '*The Weeknd* is a singer' is wrong. Just say, 'The Weeknd is a singer'. Also do not use special characters for bullet points.",
-            },
-            {"role": "user", "content": command},
-        ],
-    )
-    return response.choices[0].message.content
+    while pygame.mixer.music.get_busy():
+        continue
+    pygame.mixer.quit()
+    pygame.quit()
+    os.remove("output.mp3")
 
 
 def processCommand(c):
-    if c.lower().startswith("open"):
-        site = c.lower().replace("open ", "")
-        if site == "google":
-            webbrowser.open("https://google.com")
-        elif site == "facebook":
-            webbrowser.open("https://facebook.com")
-        elif site == "youtube":
-            webbrowser.open("https://youtube.com")
-        elif site == "instagram":
-            webbrowser.open("https://instagram.com")
+    req = ast.literal_eval(ap.aiProcess(c, "process"))
+    category = req[0]
+    if category == "website":
+        site = req[1]
+        webbrowser.open(site)
 
-    elif c.lower().startswith("play"):
-        song = c.lower().replace("play ", "")
+    elif category == "music":
+        song = req[1]
         link = musicLibrary.music[song]
+        asyncio.run(speak(f"Playing {song}"))
         webbrowser.open(link)
 
-    elif "news" in c.lower():
-        speak("Here's some news:")
+    elif category == "news":
+        asyncio.run(speak("Here's some news:"))
         r = requests.get(
             f"https://newsapi.org/v2/top-headlines?country=us&apiKey={newsapi}"
         )
@@ -62,16 +69,18 @@ def processCommand(c):
             articles = data.get("articles", [])[:5]
             for article in articles:
                 print(article["title"])
-                speak(article["title"])
+                asyncio.run(speak(article["title"]))
 
     else:
-        # let deepseek handle the request
-        speak(aiProcess(c))
-        print(aiProcess(c))
+        # let OpenAI handle the request
+        response = ap.aiProcess(c)
+        print(response)
+        asyncio.run(speak(response))
 
 
 if __name__ == "__main__":
-    speak("Initializing Bingo...")
+
+    asyncio.run(speak("Initializing Bingo..."))
     while True:
         # * Listen for the wake word 'Bingo'
 
@@ -83,14 +92,14 @@ if __name__ == "__main__":
         try:
             with sr.Microphone() as source:
                 print("Listening...")
-                audio = r.listen(source, timeout=2, phrase_time_limit=2)
+                audio = r.listen(source, timeout=None, phrase_time_limit=1.2)
             word = r.recognize_google(audio)
             # Recognising wake word
             if word.lower() == wake_word:
-                speak("Yes")
 
                 # Listen for command
                 with sr.Microphone() as source:
+                    asyncio.run(speak("Yes"))
                     print("Bingo active...")
                     audio = r.listen(source)
                     command = r.recognize_google(audio)
