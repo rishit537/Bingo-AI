@@ -1,4 +1,5 @@
 import os
+import threading
 import warnings
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
@@ -9,9 +10,9 @@ import pygame
 import speech_recognition as sr
 import webbrowser
 import pyttsx3
-import musicLibrary
 import requests
-import aiProcessing as ap
+from aiProcessing import aiProcess
+from spotify import searchSong
 import edge_tts
 import asyncio
 
@@ -29,35 +30,54 @@ newsapi = "c1e8ed90a395416da7e4da978a95129f"
 engine.setProperty("rate", 150)
 
 
+def playsound(path, wait=False):
+    def _play():
+        pygame.init()
+        pygame.mixer.init()
+        pygame.mixer.music.load(path)
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            pygame.time.Clock().tick(10)
+        pygame.mixer.quit()
+        pygame.quit()
+
+    if wait:
+        _play()
+    else:
+        threading.Thread(target=_play, daemon=True).start()
+
+
 async def speak(text):
     # engine.say(text)
     # engine.runAndWait()
     tts = edge_tts.Communicate(text=text, voice="en-US-GuyNeural")
     await tts.save("output.mp3")
-    pygame.init()
-    pygame.mixer.init()
-    pygame.mixer.music.load("output.mp3")
-    pygame.mixer.music.play()
-
-    while pygame.mixer.music.get_busy():
-        continue
-    pygame.mixer.quit()
-    pygame.quit()
+    print(text)
+    playsound("output.mp3", True)
     os.remove("output.mp3")
 
 
 def processCommand(c):
-    req = ast.literal_eval(ap.aiProcess(c, "process"))
+    req = ast.literal_eval(aiProcess(c, "process"))
     category = req[0]
     if category == "website":
         site = req[1]
-        webbrowser.open(site)
+        if len(req) == 3:
+            query = req[2]
+            webbrowser.open(f"{site}/search?q={query}")
+            asyncio.run(
+                speak(f"Opening Google on your browser to search for {query}...")
+            )
+        else:
+            webbrowser.open(site)
 
     elif category == "music":
         song = req[1]
-        link = musicLibrary.music[song]
-        asyncio.run(speak(f"Playing {song}"))
-        webbrowser.open(link)
+        artist = ""
+        if len(req) == 3:
+            artist = req[2]
+        song_details = searchSong(song, artist)
+        asyncio.run(speak(f"Playing {song_details[0]} by {song_details[1]}"))
 
     elif category == "news":
         asyncio.run(speak("Here's some news:"))
@@ -68,42 +88,43 @@ def processCommand(c):
             data = r.json()
             articles = data.get("articles", [])[:5]
             for article in articles:
-                print(article["title"])
                 asyncio.run(speak(article["title"]))
 
     else:
         # let OpenAI handle the request
-        response = ap.aiProcess(c)
-        print(response)
+        response = aiProcess(c)
         asyncio.run(speak(response))
 
 
 if __name__ == "__main__":
 
     asyncio.run(speak("Initializing Bingo..."))
-    while True:
-        # * Listen for the wake word 'Bingo'
+    # * Listen for the wake word 'Bingo'
 
-        # obtain audio from the microphone
-        r = sr.Recognizer()
+    r = sr.Recognizer()
 
-        print("recognizing")
+    # obtain audio from the microphone
+
+    with sr.Microphone() as source:
         # recognize speech using Google
-        try:
-            with sr.Microphone() as source:
-                print("Listening...")
-                audio = r.listen(source, timeout=None, phrase_time_limit=1.2)
-            word = r.recognize_google(audio)
-            # Recognising wake word
-            if word.lower() == wake_word:
+        while True:
+            print("Listening...")
+            r.pause_threshold = 0.8  # silence timeout after user finishes speaking
+            try:
+                audio = r.listen(source, timeout=None)
+                word = r.recognize_google(audio)
 
-                # Listen for command
-                with sr.Microphone() as source:
-                    asyncio.run(speak("Yes"))
+                # Recognising wake word
+                if wake_word in word.lower():
+                    r.pause_threshold = (
+                        1.7  # silence timeout after user finishes speaking
+                    )
+                    # Listen for command
+                    playsound("start_listening.mp3")
                     print("Bingo active...")
-                    audio = r.listen(source)
+                    audio = r.listen(source, phrase_time_limit=10)
+                    playsound("finish_listening.mp3")
                     command = r.recognize_google(audio)
-
                     processCommand(command)
-        except Exception as e:
-            print("Error: {0}".format(e))
+            except Exception as e:
+                print("Error: {0}".format(e))
