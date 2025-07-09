@@ -12,7 +12,7 @@ import webbrowser
 import pyttsx3
 import requests
 from aiProcessing import aiProcess
-from spotify import searchSong
+from spotify import *
 import edge_tts
 import asyncio
 
@@ -61,23 +61,31 @@ def processCommand(c):
     req = ast.literal_eval(aiProcess(c, "process"))
     category = req[0]
     if category == "website":
-        site = req[1]
-        if len(req) == 3:
-            query = req[2]
-            webbrowser.open(f"{site}/search?q={query}")
-            asyncio.run(
-                speak(f"Opening Google on your browser to search for {query}...")
-            )
+        site = req[1]["url"]
+        query = req[1]["query"]
+        if query != "":
+            if site == "https://google.com":
+                webbrowser.open(f"{site}/search?q={query}")
+                asyncio.run(
+                    speak(f"Opening Google on your browser to search for {query}...")
+                )
+            elif site == "https://youtube.com":
+                webbrowser.open(f"{site}/results?search_query={query}")
+                asyncio.run(
+                    speak(f"Opening YouTube on your browser to search for {query}...")
+                )
         else:
             webbrowser.open(site)
 
-    elif category == "music":
-        song = req[1]
-        artist = ""
-        if len(req) == 3:
-            artist = req[2]
-        song_details = searchSong(song, artist)
-        asyncio.run(speak(f"Playing {song_details[0]} by {song_details[1]}"))
+    elif category == "spotify":
+        print(req)
+        track = req[1]["track"]
+        artist = req[1]["artist"]
+        album = req[1]["album"]
+        playlist = req[1]["playlist"]
+        shuffle = req[1]["shuffle"]
+        repeat = req[1]["repeat"]
+        searchSpotify(track, artist, album, playlist, shuffle, repeat)
 
     elif category == "news":
         asyncio.run(speak("Here's some news:"))
@@ -102,7 +110,7 @@ if __name__ == "__main__":
     # * Listen for the wake word 'Bingo'
 
     r = sr.Recognizer()
-
+    r.energy_threshold = 400
     # obtain audio from the microphone
 
     with sr.Microphone() as source:
