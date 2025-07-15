@@ -78,7 +78,6 @@ def processCommand(c):
             webbrowser.open(site)
 
     elif category == "spotify":
-        print(req)
         track = req[1]["track"]
         artist = req[1]["artist"]
         album = req[1]["album"]

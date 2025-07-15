@@ -40,7 +40,6 @@ def searchSpotify(
         query = " ".join(query_parts)
         results = spotifyObject.search(q=query, limit=20, type="track")
         tracks = results["tracks"]["items"]
-        print(tracks)
         filtered = [t for t in tracks if t["name"].lower() == track.lower()]
         if not filtered:
             filtered = tracks
@@ -172,7 +171,7 @@ def start_playback_context(
         )
 
     except spotipy.SpotifyException as e:
-        # Only retry once to avoid an infinite loop
+        # Oavoid an infinite loop
         if not retry and "NO_ACTIVE_DEVICE" in str(e) and retryCount <= 5:
             print("No active device found. Attempting to activate one...")
             webbrowser.open("spotify:")  # open the app
