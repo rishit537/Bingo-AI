@@ -8,7 +8,7 @@ def aiProcess(command, response_kind="response"):
 
     if response_kind == "process":
         response = client.chat.completions.create(
-            model="gpt-4.1-mini-2025-04-14",
+            model="gpt-5-nano",
             messages=[
                 {
                     "role": "system",
@@ -121,7 +121,7 @@ Remember:
         return response.choices[0].message.content
     else:
         response = client.chat.completions.create(
-            model="gpt-4.1-nano",
+            model="gpt-5-nano",
             messages=[
                 {
                     "role": "system",
