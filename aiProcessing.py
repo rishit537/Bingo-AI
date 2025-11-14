@@ -1,10 +1,8 @@
 from openai import OpenAI
 
 
-def aiProcess(command, response_kind="response"):
-    client = OpenAI(
-        api_key="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",
-    )
+def aiProcess(apikey, command, response_kind="response"):
+    client = OpenAI(api_key=apikey)
 
     if response_kind == "process":
         response = client.chat.completions.create(
@@ -125,7 +123,7 @@ Remember:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a virtual assistant named Bingo skilled in general tasks like giving news, playing music, performing calculations, providing information. Do not speak on behalf of the user. Do not ask follow up questions",
+                    "content": "You are a virtual assistant named Bingo skilled in general tasks like providing news, playing music, performing calculations, providing information. Do not speak on behalf of the user. Do not ask follow up questions",
                 },
                 {"role": "user", "content": command},
             ],

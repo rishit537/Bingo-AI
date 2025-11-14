@@ -2,32 +2,44 @@ import time
 import spotipy
 import webbrowser
 import random
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv("./.env")
 
 # Account details
-username = "l5ev6fq0lfgkage92tkj9s3m4"
-clientID = "44ca3b9fa0994177bdaeafa944741b3e"
-clientSecret = "44733f7048c34dabb9ec1d3c7fb4ecf1"
-redirect_uri = "http://127.0.0.1:9000"
+username = os.environ.get("SPOTIFY_USERNAME")
+clientID = os.environ.get("SPOTIFY_CLIENT_ID")
+clientSecret = os.environ.get("SPOTIFY_CLIENT_SECRET")
+redirect_uri = os.environ.get("SPOTIFY_REDIRECT_URI")
+spotifyObject = {}
+
 
 # Auth
-oauth_object = spotipy.SpotifyOAuth(
-    clientID,
-    clientSecret,
-    redirect_uri,
-    scope="playlist-read-private playlist-read-collaborative user-read-playback-state user-modify-playback-state user-read-currently-playing streaming",
-)
-token_dict = oauth_object.get_access_token()
-token = token_dict["access_token"]
-spotifyObject = spotipy.Spotify(auth=token)
-user_name = spotifyObject.current_user()
-
-# To print the response in readable format.
-# print(json.dumps(user_name, sort_keys=True, indent=4))
+def auth(username, clientID, clientSecret, redirect_uri):
+    if username and clientID and clientSecret:
+        oauth_object = spotipy.SpotifyOAuth(
+            clientID,
+            clientSecret,
+            redirect_uri,
+            scope="playlist-read-private playlist-read-collaborative user-read-playback-state user-modify-playback-state user-read-currently-playing streaming",
+        )
+        token_dict = oauth_object.get_access_token()
+        token = token_dict["access_token"]
+        globals()["spotifyObject"] = spotipy.Spotify(auth=token)
+    else:
+        print("Error: Spotify credentials not found in .env file")
 
 
 def searchSpotify(
     track="", artist="", album="", playlist="", shuffle=None, repeat=None
 ):
+    try:
+        auth(username, clientID, clientSecret, redirect_uri)
+    except Exception as e:
+        print(f"Spotify Authentication failed. Error: {e}")
+        return
     # Case 1: Search for specific track
     if track:
         query_parts = []

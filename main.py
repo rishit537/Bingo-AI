@@ -15,17 +15,17 @@ from aiProcessing import aiProcess
 from spotify import *
 import edge_tts
 import asyncio
+from dotenv import load_dotenv
+
+
+# Load the environment variables
+load_dotenv("./.env")
 
 recognizer = sr.Recognizer()
 engine = pyttsx3.init()
-# voices = engine.getProperty("voices")
 wake_word = "bingo"
-newsapi = "c1e8ed90a395416da7e4da978a95129f"
-
-# for voice in voices:
-#     if "male" in voice.name.lower():
-#         engine.setProperty("voice", voice.id)
-#         break
+NEWSAPI = os.environ.get("NEWS_API")
+OPENAI_API = os.environ.get("OPENAI_API")
 
 engine.setProperty("rate", 150)
 
@@ -58,7 +58,7 @@ async def speak(text):
 
 
 def processCommand(c):
-    req = ast.literal_eval(aiProcess(c, "process"))
+    req = ast.literal_eval(aiProcess(OPENAI_API, c, "process"))
     category = req[0]
     if category == "website":
         site = req[1]["url"]
@@ -87,19 +87,25 @@ def processCommand(c):
         searchSpotify(track, artist, album, playlist, shuffle, repeat)
 
     elif category == "news":
-        asyncio.run(speak("Here's some news:"))
-        r = requests.get(
-            f"https://newsapi.org/v2/top-headlines?country=us&apiKey={newsapi}"
-        )
-        if r.status_code == 200:
-            data = r.json()
-            articles = data.get("articles", [])[:5]
-            for article in articles:
-                asyncio.run(speak(article["title"]))
+        if NEWSAPI:
+            asyncio.run(speak("Here's some news:"))
+            r = requests.get(
+                f"https://newsapi.org/v2/top-headlines?country=us&apiKey={NEWSAPI}"
+            )
+            if r.status_code == 200:
+                data = r.json()
+                articles = data.get("articles", [])[:5]
+                for article in articles:
+                    asyncio.run(speak(article["title"]))
+        else:
+            print("Error: NewsAPI API Key not found")
+            print(
+                "Please make sure you have included your NEWS_API Api Key in the .env file to access this feature"
+            )
 
     else:
         # let OpenAI handle the request
-        response = aiProcess(c)
+        response = aiProcess(OPENAI_API, c)
         asyncio.run(speak(response))
 
 
