@@ -123,7 +123,7 @@ Remember:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a virtual assistant named Bingo skilled in general tasks like providing news, playing music, performing calculations, providing information. Do not speak on behalf of the user. Do not ask follow up questions",
+                    "content": "You are a virtual assistant named Bingo skilled in general tasks like providing news, playing music, performing calculations, providing information. Do not speak on behalf of the user. Do not ask follow up questions. Responses should be short and concise.",
                 },
                 {"role": "user", "content": command},
             ],

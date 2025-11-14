@@ -115,7 +115,7 @@ if __name__ == "__main__":
     # * Listen for the wake word 'Bingo'
 
     r = sr.Recognizer()
-    r.energy_threshold = 400
+    r.energy_threshold = 350
     # obtain audio from the microphone
 
     with sr.Microphone() as source:
