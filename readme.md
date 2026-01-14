@@ -55,7 +55,7 @@ You must get credentials for the three services Bingo uses.
 
 #### 🔑 B. Spotify API Credentials (Client ID & Secret)
 
-1. Go to the Spotify Developer Dashboard and log in.
+1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and log in.
 2. Click `Create App`.
 3. Enter any name and description.
 4. Copy the Client ID and Client Secret.
@@ -63,6 +63,9 @@ You must get credentials for the three services Bingo uses.
 6. In the `Redirect URIs` section, add a local URL. (e.g. `http://127.0.0.1:9000`)
 7. Click `Add` and then `Save`.
 8. Copy the credentials and note them down somewhere.
+9. Go to [spotify.com](https://spotify.com), click on your profile picture, click on `Account`.
+10. Inside the `Account` section, click on `Edit personal info`.
+11. Copy your `Username` and note it down somewhere.
 
 #### 🔑 C. NewsAPI Key
 
@@ -96,4 +99,7 @@ Once your .env file is set up and your virtual environment is active, run the ma
 python main.py
 ```
 
-**Note:** The first time you use a Spotify command, a browser window will open to ask for your permission. This only happens once.
+## Notes:
+
+- The first time you use a Spotify command, a browser window will open to ask for your permission. This only happens once.
+- An internet connection is required to use Bingo AI, since it uses external libraries which require internet to work.

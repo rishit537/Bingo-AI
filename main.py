@@ -48,9 +48,7 @@ def playsound(path, wait=False):
 
 
 async def speak(text):
-    # engine.say(text)
-    # engine.runAndWait()
-    tts = edge_tts.Communicate(text=text, voice="en-US-GuyNeural")
+    tts = edge_tts.Communicate(text=text, voice="en-GB-RyanNeural", rate="+5%")
     await tts.save("output.mp3")
     print(text)
     playsound("output.mp3", True)
@@ -115,7 +113,7 @@ if __name__ == "__main__":
     # * Listen for the wake word 'Bingo'
 
     r = sr.Recognizer()
-    r.energy_threshold = 350
+    r.energy_threshold = 325
     # obtain audio from the microphone
 
     with sr.Microphone() as source:
